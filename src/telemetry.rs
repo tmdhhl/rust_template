@@ -9,11 +9,11 @@ use tracing_subscriber::{
     fmt::{
         Layer,
         format::{Compact, DefaultFields, Format},
-        writer::MakeWriterExt,
     },
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
+type DynLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>;
 
 // 类型别名简化复杂的类型签名
 type StdoutLayer = Layer<Registry, DefaultFields, Format, NonBlocking>;
@@ -29,13 +29,23 @@ pub fn tracing_init_with_config(log_dir: &str, level: LevelFilter) -> Result<Vec
     let format = create_format();
 
     let (stdout_guard, stdout_layer) = create_stdout_layer(&format);
-    let (file_guard, file_layer) = create_file_layer(log_dir, &format);
+    let mut layers = vec![];
+    for filename in ["info.log", "error.log"] {
+        let (file_guard, file_layer) = create_file_layer(filename, log_dir, &format);
+        layers.push(file_layer);
+        guards.push(file_guard);
+    }
 
-    guards.extend([stdout_guard, file_guard]);
+    let dyn_layers = layers
+        .into_iter()
+        .map(|l| Box::new(l) as DynLayer)
+        .reduce(|x, y| Box::new(x.and_then(y)));
+
+    // guards.extend([stdout_guard, file_guard]);
 
     let env_filter = EnvFilter::from_default_env().add_directive(level.into());
     tracing_subscriber::registry()
-        .with(stdout_layer.and_then(file_layer))
+        .with(stdout_layer.and_then(dyn_layers))
         .with(env_filter)
         .init();
 
@@ -58,11 +68,8 @@ fn create_stdout_layer(format: &Format) -> (WorkerGuard, StdoutLayer) {
     (guard, layer)
 }
 
-fn create_file_layer(log_dir: &str, format: &Format) -> (WorkerGuard, FileLayer) {
-    let file_appender = RollingFileAppender::new(Rotation::DAILY, log_dir, "info.log").and(
-        RollingFileAppender::new(Rotation::DAILY, log_dir, "error.log"),
-    );
-
+fn create_file_layer(filename: &str, log_dir: &str, format: &Format) -> (WorkerGuard, FileLayer) {
+    let file_appender = RollingFileAppender::new(Rotation::DAILY, log_dir, filename);
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
     let layer = Layer::new()
