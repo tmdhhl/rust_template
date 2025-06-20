@@ -1,0 +1,15 @@
+application_settings:
+  port: 8000
+log_settings:
+  log_dir: logs
+  targets:
+    - kind: stdout
+      level: info
+    - kind: file
+      level: info
+      filename: info.log
+      rotation: daily
+    - kind: file
+      level: error
+      filename: error.log
+      rotation: minutely
