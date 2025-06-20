@@ -61,6 +61,7 @@ fn create_layers(
                     tracing_subscriber::fmt::layer()
                         .event_format(format)
                         .with_writer(file_nonblocking)
+                        .with_ansi(false)
                         .with_filter(level_filter),
                 ) as DynLayer;
             }

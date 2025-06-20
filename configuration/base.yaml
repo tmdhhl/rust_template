@@ -12,4 +12,4 @@ log_settings:
     - kind: file
       level: error
       filename: error.log
-      rotation: minutely
+      rotation: daily
