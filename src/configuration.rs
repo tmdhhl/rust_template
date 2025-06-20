@@ -1,51 +1,54 @@
-use std::{default, fmt::format, ops::Deref, str::FromStr};
-
 use anyhow::Result;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, Display, EnumString, IntoStaticStr};
-use tracing_appender::rolling::Rotation;
 
-#[derive(Deserialize)]
-#[serde(bound(deserialize = "'de: 'a"))]
-pub struct Settings<'a> {
+#[derive(Serialize, Deserialize)]
+pub struct Settings {
     pub application_settings: ApplicationSettings,
-    pub log_settings: LogSettings<'a>,
+    pub log_settings: LogSettings,
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct ApplicationSettings {
     pub port: u16,
 }
 
-#[derive(Deserialize)]
-pub struct LogSettings<'a> {
-    pub log_dir: &'a str,
-    pub targets: Vec<Target<'a>>,
+#[derive(Serialize, Deserialize)]
+pub struct LogSettings {
+    pub log_dir: String,
+    pub targets: Vec<Target>,
 }
 
-#[derive(Deserialize)]
-pub struct Target<'a> {
+#[derive(Serialize, Deserialize)]
+pub struct Target {
+    #[serde(default)]
     pub kind: TargetKind,
     #[serde(default = "default_filename")]
-    pub filename: &'a str,
-    pub level: &'a str,
+    pub filename: String,
+    #[serde(default = "default_level")]
+    pub level: String,
     #[serde(default)]
     pub rotation: RotationKind,
 }
 
-fn default_filename() -> &'static str {
-    "info.log"
+fn default_level() -> String {
+    "info".into()
 }
 
-#[derive(Deserialize)]
-#[serde(rename_all(serialize = "snake_case"))]
+fn default_filename() -> String {
+    "info.log".into()
+}
+
+#[derive(Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
 pub enum TargetKind {
+    #[default]
     Stdout,
     File,
 }
 
-#[derive(Deserialize, Default, Copy, Clone)]
-#[serde(rename_all(serialize = "snake_case"))]
+#[derive(Serialize, Deserialize, Default, Copy, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum RotationKind {
     MINUTELY,
     HOURLY,
@@ -54,8 +57,8 @@ pub enum RotationKind {
     NEVER,
 }
 
-impl<'a> Settings<'a> {
-    pub fn load() -> Result<Settings<'a>> {
+impl Settings {
+    pub fn load() -> Result<Settings> {
         let current_dir = std::env::current_dir()?;
         let configuration = current_dir.join("configuration");
 
