@@ -1,6 +1,9 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use strum::{AsRefStr, Display, EnumString, IntoStaticStr};
+use tracing::Level;
+use tracing_appender::rolling::Rotation;
 
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
@@ -23,20 +26,43 @@ pub struct LogSettings {
 pub struct Target {
     #[serde(default)]
     pub kind: TargetKind,
-    #[serde(default = "default_filename")]
-    pub filename: String,
+    #[serde(default = "FilenameString::default_filename")]
+    pub filename: FilenameString,
+    #[serde(with = "LevelDef")]
     #[serde(default = "default_level")]
-    pub level: String,
-    #[serde(default)]
-    pub rotation: RotationKind,
+    pub level: Level,
+    #[serde(with = "RotationDef")]
+    #[serde(default = "default_rotation")]
+    pub rotation: Rotation,
 }
 
-fn default_level() -> String {
-    "info".into()
+#[derive(Serialize, Deserialize, Default)]
+#[serde(remote = "Level")]
+#[serde(rename_all = "lowercase")]
+
+pub enum LevelDef {
+    TRACE,
+    DEBUG,
+    #[default]
+    INFO,
+    WARN,
+    ERROR,
 }
 
-fn default_filename() -> String {
-    "info.log".into()
+#[derive(Serialize, Deserialize)]
+pub struct FilenameString(String);
+impl FilenameString {
+    fn default_filename() -> Self {
+        FilenameString("info.log".into())
+    }
+}
+
+impl Deref for FilenameString {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -48,8 +74,9 @@ pub enum TargetKind {
 }
 
 #[derive(Serialize, Deserialize, Default, Copy, Clone)]
+#[serde(remote = "Rotation")]
 #[serde(rename_all = "lowercase")]
-pub enum RotationKind {
+pub enum RotationDef {
     MINUTELY,
     HOURLY,
     #[default]
@@ -86,4 +113,12 @@ pub enum Environment {
     #[default]
     Local,
     Production,
+}
+
+pub fn default_level() -> Level {
+    Level::INFO
+}
+
+pub fn default_rotation() -> Rotation {
+    Rotation::DAILY
 }
