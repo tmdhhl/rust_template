@@ -1,71 +1,94 @@
-use anyhow::Result;
+use crate::configuration::{LogSettings, RotationKind};
 use tracing::level_filters::LevelFilter;
 use tracing_appender::{
-    non_blocking::{NonBlocking, WorkerGuard},
+    non_blocking::WorkerGuard,
     rolling::{RollingFileAppender, Rotation},
 };
+use tracing_subscriber::Layer as _;
 use tracing_subscriber::{
-    EnvFilter, Layer as _, Registry,
-    fmt::{
-        Layer,
-        format::{Compact, DefaultFields, Format},
-    },
+    EnvFilter, Registry,
+    fmt::{Layer, format::Format},
     layer::SubscriberExt,
     util::SubscriberInitExt,
 };
 type DynLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>;
 
-pub fn tracing_init() -> Result<Vec<WorkerGuard>> {
-    tracing_init_with_config("logs/", LevelFilter::INFO)
-}
-
-pub fn tracing_init_with_config(log_dir: &str, level: LevelFilter) -> Result<Vec<WorkerGuard>> {
-    let mut guards = Vec::new();
-
+pub fn init_tracing(config: LogSettings) -> Vec<WorkerGuard> {
     let format = create_format();
 
-    let (stdout_guard, stdout_layer) = create_stdout_layer(&format);
-    let mut layers = vec![];
-    for filename in ["info.log", "error.log"] {
-        let (file_guard, file_layer) = create_file_layer(filename, log_dir, &format);
-        layers.push(file_layer);
-        guards.push(file_guard);
+    let (layers, guards) = create_layers(config, format);
+    let filter = EnvFilter::from_default_env().add_directive(LevelFilter::INFO.into());
+    tracing_subscriber::registry()
+        .with(layers)
+        .with(filter)
+        .init();
+    guards
+}
+
+fn create_layers(
+    config: LogSettings,
+    format: Format,
+) -> (
+    Option<Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>>,
+    Vec<WorkerGuard>,
+) {
+    let mut guards = vec![];
+    let mut layers: Vec<Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>> =
+        vec![];
+
+    for c in config.targets {
+        let guard;
+        let layer;
+        let format = format.clone();
+        match c.kind {
+            crate::configuration::TargetKind::Stdout => {
+                let (stdout_nonblocking, stdout_guard) =
+                    tracing_appender::non_blocking(std::io::stdout());
+                guard = stdout_guard;
+                layer = Box::new(
+                    Layer::new()
+                        .event_format(format)
+                        .with_writer(stdout_nonblocking)
+                        .with_ansi(true),
+                ) as DynLayer;
+            }
+            crate::configuration::TargetKind::File => {
+                let file_appender =
+                    RollingFileAppender::new(c.rotation.into(), config.log_dir, c.filename);
+                let (file_nonblocking, file_guard) = tracing_appender::non_blocking(file_appender);
+                guard = file_guard;
+                layer = Box::new(
+                    Layer::new()
+                        .event_format(format)
+                        .with_writer(file_nonblocking)
+                        .compact(),
+                ) as DynLayer;
+            }
+        }
+        layers.push(layer);
+        guards.push(guard);
     }
 
-    let dyn_layers = layers.into_iter().reduce(|x, y| Box::new(x.and_then(y)));
-    let env_filter = EnvFilter::from_default_env().add_directive(level.into());
-    tracing_subscriber::registry()
-        .with(stdout_layer.and_then(dyn_layers))
-        .with(env_filter)
-        .init();
-
-    Ok(guards)
+    (
+        layers.into_iter().reduce(|x, y| Box::new(x.and_then(y))),
+        guards,
+    )
 }
 
 fn create_format() -> Format {
     Format::default()
-        .with_line_number(true)
         .with_file(true)
+        .with_line_number(true)
         .with_target(false)
 }
 
-fn create_stdout_layer(format: &Format) -> (WorkerGuard, DynLayer) {
-    let (stdout, guard) = tracing_appender::non_blocking(std::io::stdout());
-    let layer = Layer::new()
-        .event_format(format.clone())
-        .with_writer(stdout)
-        .with_ansi(true);
-    (guard, Box::new(layer))
-}
-
-fn create_file_layer(filename: &str, log_dir: &str, format: &Format) -> (WorkerGuard, DynLayer) {
-    let file_appender = RollingFileAppender::new(Rotation::DAILY, log_dir, filename);
-    let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
-
-    let layer = Layer::new()
-        .event_format(format.clone())
-        .with_writer(non_blocking)
-        .compact();
-
-    (guard, Box::new(layer))
+impl From<RotationKind> for Rotation {
+    fn from(kind: RotationKind) -> Self {
+        match kind {
+            RotationKind::MINUTELY => Rotation::MINUTELY,
+            RotationKind::HOURLY => Rotation::HOURLY,
+            RotationKind::DAILY => Rotation::DAILY,
+            RotationKind::NEVER => Rotation::NEVER,
+        }
+    }
 }
