@@ -1,8 +1,0 @@
-2025-06-19T12:04:59.865758Z  INFO examples/simple_multi_file.rs:33: 这是 INFO 日志 - 会写入所有文件
-2025-06-19T12:04:59.865828Z  WARN examples/simple_multi_file.rs:34: 这是 WARN 日志 - 会写入所有文件
-2025-06-19T12:04:59.865837Z ERROR examples/simple_multi_file.rs:35: 这是 ERROR 日志 - 会写入所有文件
-2025-06-19T12:04:59.865844Z  INFO examples/simple_multi_file.rs:39: 处理任务 1
-2025-06-19T12:04:59.865848Z  INFO examples/simple_multi_file.rs:39: 处理任务 2
-2025-06-19T12:04:59.865854Z  WARN examples/simple_multi_file.rs:41: 任务 2 遇到警告
-2025-06-19T12:04:59.865858Z  INFO examples/simple_multi_file.rs:39: 处理任务 3
-2025-06-19T12:04:59.865863Z ERROR examples/simple_multi_file.rs:44: 任务 3 发生错误
