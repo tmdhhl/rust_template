@@ -15,10 +15,6 @@ use tracing_subscriber::{
 };
 type DynLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>;
 
-// 类型别名简化复杂的类型签名
-type StdoutLayer = Layer<Registry, DefaultFields, Format, NonBlocking>;
-type FileLayer = Layer<Registry, DefaultFields, Format<Compact>, NonBlocking>;
-
 pub fn tracing_init() -> Result<Vec<WorkerGuard>> {
     tracing_init_with_config("logs/", LevelFilter::INFO)
 }
@@ -36,13 +32,7 @@ pub fn tracing_init_with_config(log_dir: &str, level: LevelFilter) -> Result<Vec
         guards.push(file_guard);
     }
 
-    let dyn_layers = layers
-        .into_iter()
-        .map(|l| Box::new(l) as DynLayer)
-        .reduce(|x, y| Box::new(x.and_then(y)));
-
-    // guards.extend([stdout_guard, file_guard]);
-
+    let dyn_layers = layers.into_iter().reduce(|x, y| Box::new(x.and_then(y)));
     let env_filter = EnvFilter::from_default_env().add_directive(level.into());
     tracing_subscriber::registry()
         .with(stdout_layer.and_then(dyn_layers))
@@ -59,16 +49,16 @@ fn create_format() -> Format {
         .with_target(false)
 }
 
-fn create_stdout_layer(format: &Format) -> (WorkerGuard, StdoutLayer) {
+fn create_stdout_layer(format: &Format) -> (WorkerGuard, DynLayer) {
     let (stdout, guard) = tracing_appender::non_blocking(std::io::stdout());
     let layer = Layer::new()
         .event_format(format.clone())
         .with_writer(stdout)
         .with_ansi(true);
-    (guard, layer)
+    (guard, Box::new(layer))
 }
 
-fn create_file_layer(filename: &str, log_dir: &str, format: &Format) -> (WorkerGuard, FileLayer) {
+fn create_file_layer(filename: &str, log_dir: &str, format: &Format) -> (WorkerGuard, DynLayer) {
     let file_appender = RollingFileAppender::new(Rotation::DAILY, log_dir, filename);
     let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
@@ -77,5 +67,5 @@ fn create_file_layer(filename: &str, log_dir: &str, format: &Format) -> (WorkerG
         .with_writer(non_blocking)
         .compact();
 
-    (guard, layer)
+    (guard, Box::new(layer))
 }
