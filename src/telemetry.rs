@@ -15,10 +15,10 @@ use crate::configuration::{self, LogSettings};
 type DynLayer = Box<dyn tracing_subscriber::Layer<Registry> + Send + Sync + 'static>;
 
 pub fn init_tracing(config: LogSettings) -> Vec<WorkerGuard> {
-    let format = create_format();
-
-    let (layers, guards) = create_layers(config, format);
     let filter = EnvFilter::from_default_env().add_directive(LevelFilter::INFO.into());
+
+    let format = create_format();
+    let (layers, guards) = create_layers(config, format);
     tracing_subscriber::registry()
         .with(layers)
         .with(filter)
