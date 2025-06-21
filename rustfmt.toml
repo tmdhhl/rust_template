@@ -1,0 +1,5 @@
+# 基础格式化规则
+reorder_imports = true    # 启用导入重新排序
+reorder_modules = true    # 启用模块重新排序
+imports_granularity="Crate"
+group_imports = "Preserve" # 保留已有的分组结构

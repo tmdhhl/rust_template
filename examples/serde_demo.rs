@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-
 use tracing_appender::rolling::Rotation;
 
 #[derive(Serialize, Deserialize)]
@@ -27,12 +26,12 @@ pub struct Target {
     pub filename: String,
     #[serde(default = "default_level")]
     pub level: String,
-    #[serde(default="default_rotation")]
+    #[serde(default = "default_rotation")]
     #[serde(with = "RotationDef")]
     pub rotation: Rotation,
 }
 
-fn default_rotation()-> Rotation {
+fn default_rotation() -> Rotation {
     Rotation::DAILY
 }
 
