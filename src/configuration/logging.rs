@@ -4,13 +4,13 @@ use serde::{Deserialize, Serialize};
 use tracing::Level;
 use tracing_appender::rolling::Rotation;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct LogSettings {
     pub log_dir: String,
     pub targets: Vec<Target>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Target {
     #[serde(default)]
     pub kind: TargetKind,
@@ -24,7 +24,7 @@ pub struct Target {
     pub rotation: Rotation,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 #[serde(remote = "Level")]
 #[serde(rename_all = "lowercase")]
 pub enum LevelDef {
@@ -47,7 +47,7 @@ pub enum RotationDef {
     NEVER,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, Clone, Copy)]
 #[serde(rename_all = "lowercase")]
 pub enum TargetKind {
     #[default]
@@ -55,7 +55,7 @@ pub enum TargetKind {
     File,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct FilenameString(String);
 
 impl FilenameString {

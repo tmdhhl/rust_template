@@ -4,7 +4,7 @@ log_settings:
   log_dir: logs
   targets:
     - kind: stdout
-      level: info
+      level: debug
     - kind: file
       level: info
       filename: info.log
@@ -13,3 +13,9 @@ log_settings:
       level: error
       filename: error.log
       rotation: daily
+db_settings:
+  host: 127.0.0.1
+  port: 5432
+  database: newsletter
+  username: postgres
+  password: password

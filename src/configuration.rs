@@ -1,19 +1,22 @@
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 use crate::configuration::environment::Environment;
 
 pub mod application;
+pub mod database;
 pub mod environment;
 pub mod logging;
 
 pub use application::ApplicationSettings;
+pub use database::DatabaseSettings;
 pub use logging::LogSettings;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Settings {
     pub application_settings: ApplicationSettings,
     pub log_settings: LogSettings,
+    pub db_settings: DatabaseSettings,
 }
 
 impl Settings {

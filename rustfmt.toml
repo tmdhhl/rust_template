@@ -1,5 +1,7 @@
 # 基础格式化规则
-reorder_imports = true    # 启用导入重新排序
-reorder_modules = true    # 启用模块重新排序
-imports_granularity="Crate"
-group_imports = "Preserve" # 保留已有的分组结构
+reorder_imports = true        # 启用导入重新排序
+reorder_modules = true        # 启用模块重新排序
+imports_granularity = "Crate" # 控制 use 语句中导入的结构
+
+group_imports = "StdExternalCrate" # (Unstable)保留已有的分组结构
+reorder_impl_items = true          # (Unstable)重新排序 impl 项。 type 和 const 放在最前面，然后是宏和方法。

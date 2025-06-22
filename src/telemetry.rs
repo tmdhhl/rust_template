@@ -1,5 +1,7 @@
-use tracing::level_filters::LevelFilter;
+use tracing::{Subscriber, level_filters::LevelFilter, subscriber::set_global_default};
 use tracing_appender::{non_blocking::WorkerGuard, rolling::RollingFileAppender};
+use tracing_error::ErrorLayer;
+use tracing_log::LogTracer;
 use tracing_subscriber::{
     Layer as _, Registry,
     filter::Filtered,
@@ -8,10 +10,11 @@ use tracing_subscriber::{
         time::{ChronoLocal, FormatTime},
     },
     layer::SubscriberExt,
-    util::SubscriberInitExt,
 };
 
 use crate::configuration::{self, LogSettings};
+
+const TIME_FORMAT: &str = "%Y-%m-%d %H:%M:%S";
 
 type FilteredLayer = Filtered<
     tracing_subscriber::fmt::Layer<
@@ -24,11 +27,18 @@ type FilteredLayer = Filtered<
     Registry,
 >;
 
-pub fn init_tracing(config: LogSettings) -> Vec<WorkerGuard> {
+pub fn set_subscriber(subscriber: impl Subscriber + Send + Sync + 'static) {
+    LogTracer::init().expect("Failed to set logger");
+    set_global_default(subscriber).expect("Failed to set subscriber"); // 用 .init() 会报错
+}
+
+pub fn init_tracing(
+    config: LogSettings,
+) -> (impl Subscriber + Send + Sync + 'static, Vec<WorkerGuard>) {
     let format = create_format();
     let (layers, guards) = create_layers(config, format);
-    tracing_subscriber::registry().with(layers).init();
-    guards
+    let subscriber = Registry::default().with(layers).with(ErrorLayer::default());
+    (subscriber, guards)
 }
 
 fn create_layers<T, F>(
@@ -53,7 +63,7 @@ where
                 layer = tracing_subscriber::fmt::layer()
                     .event_format(format.clone().json())
                     .with_writer(stdout_nonblocking)
-                    .with_timer(ChronoLocal::new("%Y-%m-%d %H:%M:%S".to_string()))
+                    .with_timer(ChronoLocal::new(TIME_FORMAT.to_string()))
                     .with_ansi(true)
                     .with_filter(level_filter);
             }
@@ -67,7 +77,7 @@ where
                 guard = file_guard;
                 layer = tracing_subscriber::fmt::layer()
                     .event_format(format.clone().json())
-                    .with_timer(ChronoLocal::rfc_3339())
+                    .with_timer(ChronoLocal::new(TIME_FORMAT.to_string()))
                     .with_writer(file_nonblocking)
                     .with_ansi(false)
                     .with_filter(level_filter);
