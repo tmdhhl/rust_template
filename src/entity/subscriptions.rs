@@ -5,5 +5,3 @@
 //     name TEXT NOT NULL,
 //     subscribed_at TIMESTAMP NOT NULL
 // );
-
-

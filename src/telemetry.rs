@@ -3,10 +3,13 @@ use tracing_appender::{non_blocking::WorkerGuard, rolling::RollingFileAppender};
 use tracing_error::ErrorLayer;
 use tracing_log::LogTracer;
 use tracing_subscriber::{
-    filter::Filtered, fmt::{
+    Layer as _, Registry,
+    filter::Filtered,
+    fmt::{
         format::{Compact, Format, Json},
         time::{ChronoLocal, FormatTime},
-    }, layer::SubscriberExt, Layer as _, Registry
+    },
+    layer::SubscriberExt,
 };
 
 use crate::configuration::{self, LogSettings};

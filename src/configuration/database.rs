@@ -1,4 +1,4 @@
-use std::{default, fmt::Display, time::Duration};
+use std::{fmt::Display, time::Duration};
 
 use sea_orm::ConnectOptions;
 use secrecy::{ExposeSecret, SecretString};
@@ -12,7 +12,7 @@ pub struct DatabaseSettings {
     pub database: String,
     pub username: String,
     pub password: SecretString,
-    #[serde(default="default_ssl_mode")]
+    #[serde(default = "default_ssl_mode")]
     pub ssl_mode: bool,
 }
 
@@ -25,8 +25,8 @@ impl DatabaseSettings {
             .acquire_timeout(Duration::from_secs(8))
             .idle_timeout(Duration::from_secs(8))
             .max_lifetime(Duration::from_secs(8))
-            .sqlx_logging(true)
-            .sqlx_logging_level(LevelFilter::Info)
+            .sqlx_logging(false)
+            .sqlx_logging_level(LevelFilter::Error)
             .set_schema_search_path("./schema")
             .to_owned()
     }
@@ -36,17 +36,16 @@ impl Display for DatabaseSettings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "postgres://{}:{}@{}:{}/{}?currentSchema={}",
+            "postgres://{}:{}@{}:{}/{}",
             self.username,
             self.password.expose_secret(),
             self.host,
             self.port,
-            self.database,
-            "kuai_saver"
+            self.database
         )
     }
 }
 
 fn default_ssl_mode() -> bool {
-    return false;
+    false
 }

@@ -1,6 +1,12 @@
-application_settings:
+application:
   port: 8000
-log_settings:
+  pdd:
+    domain: https://gw-api.pinduoduo.com/api/router
+    api_good_search: pdd.ddk.goods.search
+    api_gen_short_url: pdd.ddk.goods.zs.unit.url.gen
+    api_order_detail: pdd.ddk.order.detail.get
+
+log:
   log_dir: logs
   targets:
     - kind: stdout
@@ -13,7 +19,7 @@ log_settings:
       level: error
       filename: error.log
       rotation: daily
-db_settings:
+db:
   host: 127.0.0.1
   port: 5432
   database: kuai_saver

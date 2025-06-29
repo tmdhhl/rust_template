@@ -14,9 +14,9 @@ pub use logging::LogSettings;
 
 #[derive(Deserialize, Clone)]
 pub struct Settings {
-    pub application_settings: ApplicationSettings,
-    pub log_settings: LogSettings,
-    pub db_settings: DatabaseSettings,
+    pub application: ApplicationSettings,
+    pub log: LogSettings,
+    pub db: DatabaseSettings,
 }
 
 impl Settings {

@@ -5,8 +5,8 @@ use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use tokio::net::TcpListener;
 
 use crate::{
-    configuration::{self, DatabaseSettings},
-    route::get_router,
+    configuration,
+    route::{AppState, get_router},
 };
 
 pub struct Application {
@@ -16,10 +16,11 @@ pub struct Application {
 
 impl Application {
     pub async fn build(config: configuration::Settings) -> anyhow::Result<Application> {
-        let connection_pool = get_connection_pool(config.db_settings.build()).await?;
-        let router = get_router(connection_pool);
+        let connection_pool = get_connection_pool(config.db.build()).await?;
+        let app_state = AppState::new(connection_pool, config.application.clone());
+        let router = get_router(app_state);
 
-        let port = config.application_settings.port;
+        let port = config.application.port;
         let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
 
         let server = axum::serve(listener, router);

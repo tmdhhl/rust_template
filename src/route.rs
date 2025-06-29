@@ -1,22 +1,41 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
-use axum::{Router, middleware, routing::get};
+use axum::{Router, routing::get};
 use sea_orm::DatabaseConnection;
 
-use crate::middleware::print_request_response;
+use crate::{configuration::ApplicationSettings, route::translate::translate_link};
 
-pub mod admin;
+mod order_detail;
+mod translate;
 
-struct AppState {
-    connection_pool: DatabaseConnection,
+#[derive(Clone)]
+pub struct AppState {
+    inner: Arc<Mutex<AppStateInner>>,
 }
 
-pub fn get_router(pool: DatabaseConnection) -> Router {
-    let shared_state = Arc::new(AppState {
-        connection_pool: pool,
-    });
+#[derive(Clone)]
+struct AppStateInner {
+    #[allow(dead_code)]
+    connection_pool: DatabaseConnection,
+    app_settings: ApplicationSettings,
+}
+
+impl AppState {
+    pub fn new(pool: DatabaseConnection, app_settings: ApplicationSettings) -> Self {
+        let inner = AppStateInner {
+            connection_pool: pool,
+            app_settings,
+        };
+        Self {
+            inner: Arc::new(Mutex::new(inner)),
+        }
+    }
+}
+
+pub fn get_router(state: AppState) -> Router {
     Router::new()
         .route("/ping", get(|| async { "pong" }))
-        .layer(middleware::from_fn(print_request_response))
-        .with_state(shared_state)
+        .route("/translate_link", get(translate_link))
+        .route("/order_detail", get(translate_link))
+        .with_state(state)
 }

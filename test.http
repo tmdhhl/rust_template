@@ -1,1 +1,4 @@
 get http://127.0.0.1:8000/ping
+
+### 
+get http://127.0.0.1:8000/translate_link?url=https://mobile.yangkeduo.com/goods.html?ps=PT1OILL1dC
