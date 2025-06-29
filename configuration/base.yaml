@@ -16,6 +16,6 @@ log_settings:
 db_settings:
   host: 127.0.0.1
   port: 5432
-  database: newsletter
+  database: kuai_saver
   username: postgres
   password: password

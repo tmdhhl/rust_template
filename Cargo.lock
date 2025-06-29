@@ -1076,6 +1076,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "kuai_saver"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum",
+ "chrono",
+ "config",
+ "http-body-util",
+ "sea-orm",
+ "secrecy",
+ "serde",
+ "serde_json",
+ "strum 0.27.1",
+ "thiserror 2.0.12",
+ "tokio",
+ "tracing",
+ "tracing-appender",
+ "tracing-error",
+ "tracing-log",
+ "tracing-subscriber",
+ "uuid",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1183,30 +1207,6 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "newsletter"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "axum",
- "chrono",
- "config",
- "http-body-util",
- "sea-orm",
- "secrecy",
- "serde",
- "serde_json",
- "strum 0.27.1",
- "thiserror 2.0.12",
- "tokio",
- "tracing",
- "tracing-appender",
- "tracing-error",
- "tracing-log",
- "tracing-subscriber",
- "uuid",
 ]
 
 [[package]]

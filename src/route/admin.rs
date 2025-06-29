@@ -1,1 +1,1 @@
-mod newsletter;
+mod kuai_saver;

@@ -3,13 +3,10 @@ use tracing_appender::{non_blocking::WorkerGuard, rolling::RollingFileAppender};
 use tracing_error::ErrorLayer;
 use tracing_log::LogTracer;
 use tracing_subscriber::{
-    Layer as _, Registry,
-    filter::Filtered,
-    fmt::{
-        format::{Format, Json},
+    filter::Filtered, fmt::{
+        format::{Compact, Format, Json},
         time::{ChronoLocal, FormatTime},
-    },
-    layer::SubscriberExt,
+    }, layer::SubscriberExt, Layer as _, Registry
 };
 
 use crate::configuration::{self, LogSettings};
@@ -20,7 +17,7 @@ type FilteredLayer = Filtered<
     tracing_subscriber::fmt::Layer<
         Registry,
         tracing_subscriber::fmt::format::DefaultFields,
-        Format<Json, ChronoLocal>,
+        Format<Compact, ChronoLocal>,
         tracing_appender::non_blocking::NonBlocking,
     >,
     LevelFilter,
@@ -61,7 +58,7 @@ where
                     tracing_appender::non_blocking(std::io::stdout());
                 guard = stdout_guard;
                 layer = tracing_subscriber::fmt::layer()
-                    .event_format(format.clone().json())
+                    .event_format(format.clone().compact())
                     .with_writer(stdout_nonblocking)
                     .with_timer(ChronoLocal::new(TIME_FORMAT.to_string()))
                     .with_ansi(true)
@@ -76,7 +73,7 @@ where
                 let (file_nonblocking, file_guard) = tracing_appender::non_blocking(file_appender);
                 guard = file_guard;
                 layer = tracing_subscriber::fmt::layer()
-                    .event_format(format.clone().json())
+                    .event_format(format.clone().compact())
                     .with_timer(ChronoLocal::new(TIME_FORMAT.to_string()))
                     .with_writer(file_nonblocking)
                     .with_ansi(false)

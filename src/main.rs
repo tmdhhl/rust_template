@@ -1,5 +1,5 @@
 use anyhow::Result;
-use newsletter::{configuration, startup::Application, telemetry};
+use kuai_saver::{configuration, startup::Application, telemetry};
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -34,7 +34,6 @@ impl DatabaseSettings {
 
 impl Display for DatabaseSettings {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let ssl_mode = if self.ssl_mode { "require" } else { "disabled" };
         write!(
             f,
             "postgres://{}:{}@{}:{}/{}?currentSchema={}",
@@ -43,7 +42,7 @@ impl Display for DatabaseSettings {
             self.host,
             self.port,
             self.database,
-            "newsletter"
+            "kuai_saver"
         )
     }
 }
