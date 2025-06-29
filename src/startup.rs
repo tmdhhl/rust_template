@@ -38,7 +38,8 @@ impl Application {
 }
 
 async fn get_connection_pool(opts: ConnectOptions) -> anyhow::Result<DatabaseConnection> {
-    Database::connect(opts)
-        .await
-        .map_err(|e| anyhow::anyhow!(e))
+    return Ok(DatabaseConnection::default())
+    // Database::connect(opts)
+    //     .await
+    //     .map_err(|e| anyhow::anyhow!(e))
 }
